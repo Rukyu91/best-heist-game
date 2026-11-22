@@ -1,8 +1,8 @@
 # ShadowVault
 
-[![make.fun](https://make.fun/b/best-heist-game-20261122-0559/badge.svg)](https://make.fun/bounty/best-heist-game-20261122-0559)
-[![Prize](https://make.fun/b/best-heist-game-20261122-0559/prize.svg)](https://make.fun/bounty/best-heist-game-20261122-0559)
-[![Deadline](https://make.fun/b/best-heist-game-20261122-0559/deadline.svg)](https://make.fun/bounty/best-heist-game-20261122-0559)
+[![make.fun · best-heist-game-20261122-0559](https://make.fun/badge/best-heist-game-20261122-0559.svg)](https://make.fun/bounty/best-heist-game-20261122-0559?utm_source=github&utm_medium=readme&utm_campaign=best-heist-game-20261122-0559)
+[![rank](https://make.fun/badge/best-heist-game-20261122-0559/Rukyu91/best-heist-game/rank.svg)](https://make.fun/bounty/best-heist-game-20261122-0559/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=best-heist-game-20261122-0559)
+[![reward](https://make.fun/badge/best-heist-game-20261122-0559/Rukyu91/best-heist-game/reward.svg)](https://make.fun/bounty/best-heist-game-20261122-0559?utm_source=github&utm_medium=readme&utm_campaign=best-heist-game-20261122-0559)
 
 Tactical top-down stealth heist game entered in [make.fun](https://make.fun) bounty [best-heist-game-20261122-0559](https://make.fun/bounty/best-heist-game-20261122-0559).
 

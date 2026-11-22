@@ -588,6 +588,11 @@ export function createRenderer(targetCanvasElement) {
       activeWorldSimulationState.particles.draw(renderingContext2d); // Draw living particles
     }
 
+    // Render active tactical gadgets and smoke screens
+    if (activeWorldSimulationState.gadgets) {
+      activeWorldSimulationState.gadgets.draw(renderingContext2d); // Draw smoke clouds
+    }
+
     renderTacticalHeistHUD(activeWorldSimulationState); // Render top HUD & alarm meter
 
     if (activeScreenMode === SCREEN_TITLE) {

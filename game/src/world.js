@@ -12,6 +12,7 @@ import {
 import { createParticleSystem } from './particles.js'; // Visual particles FX engine
 import { createTacticalTelemetry } from './scoring.js'; // Tactical performance metrics
 import { createTacticsModel } from './tactics.js'; // Acoustic wall damping and vision model
+import { createGadgetInventory } from './gadgets.js'; // Tactical smoke and EMP gadget system
 
 export const STATE_PATROL = 0; // Guard passive patrol waypoint state
 export const STATE_SUSPICIOUS = 1; // Guard cautious investigation state
@@ -96,6 +97,9 @@ export function createWorld(randomSeedValue = 1) {
 
   // Spatial tactics and acoustic raycast model
   const tacticsSpatialModel = createTacticsModel(architecturalWalls);
+
+  // Tactical infiltration gadgets inventory subsystem instance
+  const tacticalGadgetsSubsystem = createGadgetInventory();
 
   // The operative (thief) entity state
   const operativePlayer = {
@@ -256,6 +260,7 @@ export function createWorld(randomSeedValue = 1) {
     walls: architecturalWalls, // Reference to room boundary walls array
     particles: particleEngineInstance, // Reference to particle visual FX engine
     telemetry: telemetryTrackerInstance, // Reference to performance telemetry
+    gadgets: tacticalGadgetsSubsystem, // Reference to tactical smoke and EMP gadgets
     alarm: 0, // Global facility alarm meter (0-100)
     score: 0, // Extracted bounty value
     timeElapsed: 0, // Cumulative infiltration mission seconds
@@ -320,6 +325,7 @@ export function createWorld(randomSeedValue = 1) {
 
     // Advance particle effects physics
     particleEngineInstance.update(deltaSeconds);
+    tacticalGadgetsSubsystem.update(deltaSeconds);
 
     // Emit subtle ambient crystal shimmer near central vault diamond
     if (!centralVault.unlocked && Math.random() < 0.3) {

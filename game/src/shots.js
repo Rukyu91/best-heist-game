@@ -68,3 +68,4 @@ export function stageShot(name, world) {
 
   return { screen: SCREEN_PLAY, best: 2500000 };
 }
+

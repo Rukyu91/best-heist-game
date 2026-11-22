@@ -1,4 +1,4 @@
-// Boot and game loop for ShadowVault Heist
+// Boot and main game loop for ShadowVault Heist simulation
 import { BEST_SCORE_KEY, STEP } from './config.js';
 import { createInput, ACTION_CONFIRM, ACTION_INTERACT, ACTION_MUTE, ACTION_PAUSE, ACTION_RESTART } from './input.js';
 import { createAudio } from './audio.js';
@@ -21,6 +21,7 @@ import {
 } from './render.js';
 import { stageShot } from './shots.js';
 
+// Parse optional query parameters for screenshots and deterministic seeds
 const params = new URLSearchParams(window.location.search);
 const shot = params.get('shot');
 const seedParam = Number.parseInt(params.get('seed') ?? '', 10);
@@ -46,13 +47,14 @@ function saveBest(val) {
   } catch {}
 }
 
+// Stage and render deterministic screenshots for evaluation shots
 function runShot(name) {
   const scene = stageShot(name, world);
   renderer.draw(world.state, scene.screen, scene.best);
   window.__shotReady = true;
 }
 
-
+// Run interactive game loop with responsive controls and audio cues
 function runGame() {
   const input = createInput(canvas);
   let screen = SCREEN_TITLE;
@@ -105,7 +107,7 @@ function runGame() {
       const movement = input.getMovement();
       const events = world.step(STEP, movement);
 
-      // Audio cues
+      // Audio cues for stealth footsteps
       if (movement.dx !== 0 || movement.dy !== 0) {
         footstepTimer += dt;
         const interval = movement.isSneaking ? 0.45 : 0.28;
@@ -117,6 +119,7 @@ function runGame() {
         footstepTimer = 0;
       }
 
+      // Handle simulation events
       if (events & EVENT_SUSPICIOUS) {
         audio.playSuspiciousPing();
       }

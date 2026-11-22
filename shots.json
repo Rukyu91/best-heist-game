@@ -3,3 +3,4 @@
   { "name": "2-start.png", "query": "?shot=start&seed=42" },
   { "name": "3-end.png", "query": "?shot=end&seed=42" }
 ]
+

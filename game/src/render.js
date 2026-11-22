@@ -1,4 +1,4 @@
-// High-end canvas renderer for ShadowVault Heist
+// High-end canvas renderer for ShadowVault Heist tactical simulation
 import {
   ALARM_CONFIG,
   CAMERA_CONFIG,
@@ -22,7 +22,7 @@ export function createRenderer(canvas) {
     ctx.fillStyle = '#0a0e17';
     ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    // Grid pattern
+    // Architectural grid pattern
     ctx.strokeStyle = '#111827';
     ctx.lineWidth = 1;
     const tileSize = 40;
@@ -55,7 +55,7 @@ export function createRenderer(canvas) {
       ctx.stroke();
     }
 
-    // Inner bright neon accent
+    // Inner bright neon accent line
     ctx.shadowBlur = 0;
     ctx.strokeStyle = '#64748b';
     ctx.lineWidth = 2;
@@ -110,7 +110,7 @@ export function createRenderer(canvas) {
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Camera body
+      // Camera casing body
       ctx.fillStyle = '#475569';
       ctx.fillRect(0, -5, 16, 10);
 
@@ -143,7 +143,7 @@ export function createRenderer(canvas) {
       ctx.lineTo(laser.x2, laser.y2);
       ctx.stroke();
 
-      // Laser emitters
+      // Laser emitter mounts
       ctx.fillStyle = '#991b1b';
       ctx.beginPath();
       ctx.arc(laser.x1, laser.y1, 5, 0, Math.PI * 2);
@@ -167,13 +167,13 @@ export function createRenderer(canvas) {
       ctx.lineWidth = 2;
       ctx.strokeRect(-14, -10, 28, 20);
 
-      // Status LED
+      // Status indicator LED
       ctx.fillStyle = term.hacked ? '#34d399' : '#60a5fa';
       ctx.beginPath();
       ctx.arc(0, 0, 4, 0, Math.PI * 2);
       ctx.fill();
 
-      // Label text
+      // Keypad label
       ctx.font = '9px monospace';
       ctx.fillStyle = term.hacked ? '#a7f3d0' : '#bfdbfe';
       ctx.textAlign = 'center';
@@ -207,7 +207,7 @@ export function createRenderer(canvas) {
     ctx.stroke();
 
     if (!vault.unlocked) {
-      // Rotating sparkling Obsidian Diamond
+      // Rotating sparkling Obsidian Diamond Core
       ctx.rotate(time * 1.5);
       ctx.fillStyle = '#06b6d4';
       ctx.shadowColor = '#00e5ff';
@@ -246,7 +246,7 @@ export function createRenderer(canvas) {
     for (let i = 0; i < guards.length; i++) {
       const guard = guards[i];
 
-      // Vision cone
+      // Vision cone dynamic rendering
       let coneFill = GUARD_CONFIG.patrolColor;
       let coneStroke = GUARD_CONFIG.patrolStroke;
       if (guard.state === STATE_SUSPICIOUS) {
@@ -272,17 +272,17 @@ export function createRenderer(canvas) {
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Shoulders / vest
+      // Tactical armor vest
       ctx.fillStyle = '#1e293b';
       ctx.fillRect(-8, -12, 16, 24);
 
-      // Weapon / flashlight
+      // Guard flashlight / weapon
       ctx.fillStyle = '#0f172a';
       ctx.fillRect(8, 4, 12, 5);
 
       ctx.restore();
 
-      // Alert exclamation indicator above head
+      // Alert indicator icon above guard head
       if (guard.state === STATE_ALERT) {
         ctx.font = 'bold 16px sans-serif';
         ctx.fillStyle = '#ef4444';
@@ -301,7 +301,7 @@ export function createRenderer(canvas) {
     ctx.save();
     ctx.translate(player.x, player.y);
 
-    // Sneak noise ripple
+    // Sneak footsteps noise ripple
     if (player.speed > 0) {
       const radius = player.isSneaking ? PLAYER_CONFIG.sneakNoiseRadius : PLAYER_CONFIG.walkNoiseRadius;
       const rippleTime = (time * 3) % 1;
@@ -314,7 +314,7 @@ export function createRenderer(canvas) {
 
     ctx.rotate(player.angle);
 
-    // Thief stealth body
+    // Stealth operative avatar
     ctx.shadowColor = '#00e5ff';
     ctx.shadowBlur = player.hasLoot ? 15 : 6;
     ctx.fillStyle = '#0f172a';
@@ -326,13 +326,13 @@ export function createRenderer(canvas) {
     ctx.lineWidth = 2.5;
     ctx.stroke();
 
-    // Backpack / direction indicator
+    // Satchel / forward indicator
     ctx.fillStyle = player.hasLoot ? '#d97706' : '#0284c7';
     ctx.fillRect(-8, -6, 6, 12);
 
     ctx.restore();
 
-    // Hacking progress bar
+    // Hacking progress bar indicator
     if (player.isHacking && player.hackProgress > 0) {
       const pct = Math.min(1, player.hackProgress / 3.0);
       ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
@@ -346,18 +346,18 @@ export function createRenderer(canvas) {
     ctx.save();
     ctx.translate(zone.x, zone.y);
 
-    // Escape Van vehicle representation
+    // Escape Van getaway vehicle representation
     ctx.fillStyle = '#1e293b';
     ctx.fillRect(-35, -20, 70, 40);
     ctx.strokeStyle = '#10b981';
     ctx.lineWidth = 2;
     ctx.strokeRect(-35, -20, 70, 40);
 
-    // Windows
+    // Getaway van windows
     ctx.fillStyle = '#0284c7';
     ctx.fillRect(-15, -16, 20, 32);
 
-    // Escape zone dashed boundary
+    // Extraction zone dashed perimeter
     ctx.strokeStyle = '#34d399';
     ctx.lineWidth = 1.5;
     ctx.setLineDash([6, 6]);
@@ -374,7 +374,7 @@ export function createRenderer(canvas) {
   }
 
   function drawHUD(state) {
-    // Top banner backdrop
+    // Top banner header backdrop
     ctx.fillStyle = 'rgba(10, 14, 23, 0.95)';
     ctx.fillRect(0, 0, SCREEN_WIDTH, 60);
     ctx.strokeStyle = '#1f2937';
@@ -384,7 +384,7 @@ export function createRenderer(canvas) {
     ctx.lineTo(SCREEN_WIDTH, 60);
     ctx.stroke();
 
-    // 1. ALARM METER (The required prominent element)
+    // 1. ALARM METER (The primary required HUD indicator)
     const alarmWidth = 260;
     const alarmHeight = 16;
     const alarmX = 40;
@@ -395,14 +395,14 @@ export function createRenderer(canvas) {
     ctx.textAlign = 'left';
     ctx.fillText('SECURITY ALARM METER:', alarmX, 15);
 
-    // Meter container
+    // Meter frame container
     ctx.fillStyle = '#0f172a';
     ctx.fillRect(alarmX, alarmY, alarmWidth, alarmHeight);
     ctx.strokeStyle = state.alarm > 70 ? '#ef4444' : '#334155';
     ctx.lineWidth = 1.5;
     ctx.strokeRect(alarmX, alarmY, alarmWidth, alarmHeight);
 
-    // Gradient fill
+    // Dynamic gradient alarm level fill
     const fillWidth = (state.alarm / 100) * alarmWidth;
     if (fillWidth > 0) {
       const grad = ctx.createLinearGradient(alarmX, 0, alarmX + alarmWidth, 0);
@@ -435,7 +435,7 @@ export function createRenderer(canvas) {
     ctx.fillStyle = '#94a3b8';
     ctx.fillText(state.statusText, SCREEN_WIDTH / 2, 44);
 
-    // 3. TARGET LOOT STAT
+    // 3. TARGET LOOT STATS
     ctx.font = 'bold 12px monospace';
     ctx.fillStyle = '#fbbf24';
     ctx.textAlign = 'right';
@@ -445,7 +445,7 @@ export function createRenderer(canvas) {
     ctx.fillStyle = state.player.hasLoot ? '#4ade80' : '#cbd5e1';
     ctx.fillText(state.player.hasLoot ? 'STATUS: SECURED IN SATCHEL' : 'STATUS: LOCKED IN VAULT', SCREEN_WIDTH - 40, 42);
 
-    // 4. RADAR MINIMAP (Bottom-Right)
+    // 4. RADAR SURVEILLANCE MINIMAP (Bottom-Right)
     const mapSize = 100;
     const mapX = SCREEN_WIDTH - mapSize - 20;
     const mapY = SCREEN_HEIGHT - mapSize - 20;
@@ -456,7 +456,7 @@ export function createRenderer(canvas) {
     ctx.lineWidth = 1.5;
     ctx.strokeRect(mapX, mapY, mapSize, mapSize);
 
-    // Minimap radar sweep line
+    // Minimap radar sweep ring
     ctx.strokeStyle = 'rgba(0, 229, 255, 0.3)';
     ctx.beginPath();
     ctx.arc(mapX + mapSize / 2, mapY + mapSize / 2, mapSize / 2 - 4, 0, Math.PI * 2);
@@ -465,18 +465,18 @@ export function createRenderer(canvas) {
     const scaleX = mapSize / SCREEN_WIDTH;
     const scaleY = mapSize / SCREEN_HEIGHT;
 
-    // Minimap Vault
+    // Minimap Vault icon
     ctx.fillStyle = '#f59e0b';
     ctx.fillRect(mapX + state.vault.x * scaleX - 2, mapY + state.vault.y * scaleY - 2, 5, 5);
 
-    // Minimap Guards
+    // Minimap Guards icons
     ctx.fillStyle = '#ef4444';
     for (let i = 0; i < state.guards.length; i++) {
       const g = state.guards[i];
       ctx.fillRect(mapX + g.x * scaleX - 1.5, mapY + g.y * scaleY - 1.5, 3.5, 3.5);
     }
 
-    // Minimap Player
+    // Minimap Player blip
     ctx.fillStyle = '#00e5ff';
     ctx.beginPath();
     ctx.arc(mapX + state.player.x * scaleX, mapY + state.player.y * scaleY, 2.5, 0, Math.PI * 2);
@@ -501,7 +501,7 @@ export function createRenderer(canvas) {
     ctx.fillStyle = '#38bdf8';
     ctx.fillText('TACTICAL STEALTH INFILTRATION SIMULATION', SCREEN_WIDTH / 2, 275);
 
-    // Briefing Box
+    // Mission Briefing Box
     ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
     ctx.fillRect(SCREEN_WIDTH / 2 - 280, 310, 560, 160);
     ctx.strokeStyle = '#334155';

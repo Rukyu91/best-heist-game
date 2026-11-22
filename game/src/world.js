@@ -22,7 +22,7 @@ export const EVENT_LOOT_GRABBED = 8;
 export const EVENT_VICTORY = 16;
 export const EVENT_CAUGHT = 32;
 
-// Standard line intersection helper
+// Standard line intersection helper for line-of-sight and laser trips
 function lineIntersects(p1, p2, p3, p4) {
   const d = (p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y);
   if (Math.abs(d) < 1e-9) return false;
@@ -82,7 +82,7 @@ export function createWorld(randomSeed = 1) {
     { x1: 1080, y1: 520, x2: 1080, y2: 480 },
   ];
 
-  // The thief
+  // The stealth operative
   const player = {
     x: 100,
     y: 620,

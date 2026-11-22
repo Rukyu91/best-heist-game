@@ -1,7 +1,9 @@
+# ShadowVault Heist - Make.fun repository ignore rules
 node_modules/
 out/
 transcripts.tar.gz
 *.log
 .DS_Store
 dist/
-
+*.tmp
+# Local runtime outputs

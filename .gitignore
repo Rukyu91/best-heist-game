@@ -6,4 +6,4 @@ transcripts.tar.gz
 .DS_Store
 dist/
 *.tmp
-# Local runtime outputs
+# Local runtime outputs & caches

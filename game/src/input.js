@@ -1,99 +1,105 @@
-// Input handler for keyboard and pointer controls in ShadowVault Heist
-export const ACTION_CONFIRM = 1;
-export const ACTION_PAUSE = 2;
-export const ACTION_INTERACT = 4;
-export const ACTION_MUTE = 8;
-export const ACTION_RESTART = 16;
+// ShadowVault: Keyboard & Pointer Input Handling Subsystem
+export const ACTION_CONFIRM = 1; // Confirm / Start / Select action bit
+export const ACTION_PAUSE = 2; // Pause / Resume toggle action bit
+export const ACTION_INTERACT = 4; // Hack keypad / Breach safe action bit
+export const ACTION_MUTE = 8; // Mute / Unmute audio toggle action bit
+export const ACTION_RESTART = 16; // Immediate restart action bit
 
-export function createInput(element) {
-  const keys = new Set();
-  let pendingActions = 0;
-  let mouseX = 0;
-  let mouseY = 0;
+export function createInput(targetInteractionElement) {
+  const activeHeldKeyCodes = new Set(); // Set of currently depressed keyboard keys
+  let accumulatedPendingActionsBitmask = 0; // Bitmask of queued instantaneous triggers
+  let currentPointerCoordX = 0; // Pointer coordinate X relative to canvas
+  let currentPointerCoordY = 0; // Pointer coordinate Y relative to canvas
 
-  function onKeyDown(event) {
-    keys.add(event.code);
+  function handleKeydownEvent(keyboardEvent) {
+    activeHeldKeyCodes.add(keyboardEvent.code); // Register depressed key code
 
-    if (event.code === 'Space' || event.code === 'KeyE') {
-      pendingActions |= ACTION_INTERACT;
-      pendingActions |= ACTION_CONFIRM;
-      event.preventDefault();
-    } else if (event.code === 'KeyP' || event.code === 'Escape') {
-      pendingActions |= ACTION_PAUSE;
-      event.preventDefault();
-    } else if (event.code === 'KeyM') {
-      pendingActions |= ACTION_MUTE;
-      event.preventDefault();
-    } else if (event.code === 'KeyR') {
-      pendingActions |= ACTION_RESTART;
-      event.preventDefault();
-    } else if (event.code === 'Enter') {
-      pendingActions |= ACTION_CONFIRM;
-      event.preventDefault();
+    if (keyboardEvent.code === 'Space' || keyboardEvent.code === 'KeyE') {
+      accumulatedPendingActionsBitmask |= ACTION_INTERACT; // Queue interaction action
+      accumulatedPendingActionsBitmask |= ACTION_CONFIRM; // Queue confirm action
+      keyboardEvent.preventDefault(); // Prevent default browser scroll
+    } else if (keyboardEvent.code === 'KeyP' || keyboardEvent.code === 'Escape') {
+      accumulatedPendingActionsBitmask |= ACTION_PAUSE; // Queue pause action
+      keyboardEvent.preventDefault(); // Prevent default browser action
+    } else if (keyboardEvent.code === 'KeyM') {
+      accumulatedPendingActionsBitmask |= ACTION_MUTE; // Queue mute action
+      keyboardEvent.preventDefault(); // Prevent default browser action
+    } else if (keyboardEvent.code === 'KeyR') {
+      accumulatedPendingActionsBitmask |= ACTION_RESTART; // Queue restart action
+      keyboardEvent.preventDefault(); // Prevent default browser action
+    } else if (keyboardEvent.code === 'Enter') {
+      accumulatedPendingActionsBitmask |= ACTION_CONFIRM; // Queue confirm action
+      keyboardEvent.preventDefault(); // Prevent default browser action
     }
   }
 
-  function onKeyUp(event) {
-    keys.delete(event.code);
+  function handleKeyupEvent(keyboardEvent) {
+    activeHeldKeyCodes.delete(keyboardEvent.code); // Unregister released key code
   }
 
-  function onMouseMove(event) {
-    const rect = element.getBoundingClientRect();
-    const scaleX = element.width / rect.width;
-    const scaleY = element.height / rect.height;
-    mouseX = (event.clientX - rect.left) * scaleX;
-    mouseY = (event.clientY - rect.top) * scaleY;
+  function handlePointerMoveEvent(pointerEvent) {
+    const canvasBoundingRect = targetInteractionElement.getBoundingClientRect(); // Canvas bounding rectangle
+    const canvasScaleRatioX = targetInteractionElement.width / canvasBoundingRect.width; // Horizontal scale ratio
+    const canvasScaleRatioY = targetInteractionElement.height / canvasBoundingRect.height; // Vertical scale ratio
+    currentPointerCoordX = (pointerEvent.clientX - canvasBoundingRect.left) * canvasScaleRatioX; // Normalized X
+    currentPointerCoordY = (pointerEvent.clientY - canvasBoundingRect.top) * canvasScaleRatioY; // Normalized Y
   }
 
-  function onPointerDown(event) {
-    pendingActions |= ACTION_CONFIRM;
-    pendingActions |= ACTION_INTERACT;
+  function handlePointerDownEvent(pointerEvent) {
+    accumulatedPendingActionsBitmask |= ACTION_CONFIRM; // Queue confirm action on click
+    accumulatedPendingActionsBitmask |= ACTION_INTERACT; // Queue interact action on click
   }
 
-  window.addEventListener('keydown', onKeyDown);
-  window.addEventListener('keyup', onKeyUp);
-  element.addEventListener('mousemove', onMouseMove);
-  element.addEventListener('pointerdown', onPointerDown);
+  window.addEventListener('keydown', handleKeydownEvent); // Listen for keydown
+  window.addEventListener('keyup', handleKeyupEvent); // Listen for keyup
+  targetInteractionElement.addEventListener('mousemove', handlePointerMoveEvent); // Listen for mousemove
+  targetInteractionElement.addEventListener('pointerdown', handlePointerDownEvent); // Listen for pointerdown
 
-  function getMovement() {
-    let dx = 0;
-    let dy = 0;
+  function queryOperativeMovement() {
+    let movementDirectionVectorX = 0; // Vector X component
+    let movementDirectionVectorY = 0; // Vector Y component
 
-    if (keys.has('KeyA') || keys.has('ArrowLeft')) dx -= 1;
-    if (keys.has('KeyD') || keys.has('ArrowRight')) dx += 1;
-    if (keys.has('KeyW') || keys.has('ArrowUp')) dy -= 1;
-    if (keys.has('KeyS') || keys.has('ArrowDown')) dy += 1;
+    if (activeHeldKeyCodes.has('KeyA') || activeHeldKeyCodes.has('ArrowLeft')) movementDirectionVectorX -= 1; // Move left
+    if (activeHeldKeyCodes.has('KeyD') || activeHeldKeyCodes.has('ArrowRight')) movementDirectionVectorX += 1; // Move right
+    if (activeHeldKeyCodes.has('KeyW') || activeHeldKeyCodes.has('ArrowUp')) movementDirectionVectorY -= 1; // Move up
+    if (activeHeldKeyCodes.has('KeyS') || activeHeldKeyCodes.has('ArrowDown')) movementDirectionVectorY += 1; // Move down
 
-    // Normalize diagonal movement
-    if (dx !== 0 && dy !== 0) {
-      const len = Math.hypot(dx, dy);
-      dx /= len;
-      dy /= len;
+    // Normalize diagonal movement vectors to unit circle
+    if (movementDirectionVectorX !== 0 && movementDirectionVectorY !== 0) {
+      const vectorMagnitudeLength = Math.hypot(movementDirectionVectorX, movementDirectionVectorY); // Hypotenuse
+      movementDirectionVectorX /= vectorMagnitudeLength; // Unit X
+      movementDirectionVectorY /= vectorMagnitudeLength; // Unit Y
     }
 
-    const isSneaking = keys.has('ShiftLeft') || keys.has('ShiftRight');
-    const isInteracting = keys.has('Space') || keys.has('KeyE');
+    const operativeIsSneaking = activeHeldKeyCodes.has('ShiftLeft') || activeHeldKeyCodes.has('ShiftRight'); // Sneak flag
+    const operativeIsInteracting = activeHeldKeyCodes.has('Space') || activeHeldKeyCodes.has('KeyE'); // Interact flag
 
-    return { dx, dy, isSneaking, isInteracting, mouseX, mouseY };
+    return {
+      dx: movementDirectionVectorX, // X movement component
+      dy: movementDirectionVectorY, // Y movement component
+      isSneaking: operativeIsSneaking, // Sneaking status
+      isInteracting: operativeIsInteracting, // Interaction status
+      mouseX: currentPointerCoordX, // Pointer coordinate X
+      mouseY: currentPointerCoordY, // Pointer coordinate Y
+    };
   }
 
-  function takeActions() {
-    const current = pendingActions;
-    pendingActions = 0;
-    return current;
+  function flushPendingActionTriggers() {
+    const currentActions = accumulatedPendingActionsBitmask; // Read queued actions
+    accumulatedPendingActionsBitmask = 0; // Reset queue
+    return currentActions; // Return snapshot
   }
 
-  function destroy() {
-    window.removeEventListener('keydown', onKeyDown);
-    window.removeEventListener('keyup', onKeyUp);
-    element.removeEventListener('mousemove', onMouseMove);
-    element.removeEventListener('pointerdown', onPointerDown);
+  function cleanupInputListeners() {
+    window.removeEventListener('keydown', handleKeydownEvent); // Remove keydown
+    window.removeEventListener('keyup', handleKeyupEvent); // Remove keyup
+    targetInteractionElement.removeEventListener('mousemove', handlePointerMoveEvent); // Remove mousemove
+    targetInteractionElement.removeEventListener('pointerdown', handlePointerDownEvent); // Remove pointerdown
   }
 
   return {
-    getMovement,
-    takeActions,
-    destroy,
+    getMovement: queryOperativeMovement, // Expose movement query
+    takeActions: flushPendingActionTriggers, // Expose action flush
+    destroy: cleanupInputListeners, // Expose cleanup method
   };
 }
-

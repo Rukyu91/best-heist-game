@@ -9,6 +9,9 @@ import {
   SCREEN_WIDTH, // Canvas width (1280px)
   STEP, // Simulation tick delta (1/60 sec)
 } from './config.js';
+import { createParticleSystem } from './particles.js'; // Visual particles FX engine
+import { createTacticalTelemetry } from './scoring.js'; // Tactical performance metrics
+import { createTacticsModel } from './tactics.js'; // Acoustic wall damping and vision model
 
 export const STATE_PATROL = 0; // Guard passive patrol waypoint state
 export const STATE_SUSPICIOUS = 1; // Guard cautious investigation state
@@ -84,6 +87,15 @@ export function createWorld(randomSeedValue = 1) {
     { x1: 1120, y1: 520, x2: 1080, y2: 520 }, // Pillar D bottom edge
     { x1: 1080, y1: 520, x2: 1080, y2: 480 }, // Pillar D left edge
   ];
+
+  // Visual particle FX subsystem instance
+  const particleEngineInstance = createParticleSystem();
+
+  // Performance telemetry tracker instance
+  const telemetryTrackerInstance = createTacticalTelemetry();
+
+  // Spatial tactics and acoustic raycast model
+  const tacticsSpatialModel = createTacticsModel(architecturalWalls);
 
   // The operative (thief) entity state
   const operativePlayer = {
@@ -242,6 +254,8 @@ export function createWorld(randomSeedValue = 1) {
     vault: centralVault, // Reference to central vault objective
     escapeZone: extractionEscapeZone, // Reference to getaway van zone
     walls: architecturalWalls, // Reference to room boundary walls array
+    particles: particleEngineInstance, // Reference to particle visual FX engine
+    telemetry: telemetryTrackerInstance, // Reference to performance telemetry
     alarm: 0, // Global facility alarm meter (0-100)
     score: 0, // Extracted bounty value
     timeElapsed: 0, // Cumulative infiltration mission seconds
@@ -284,6 +298,9 @@ export function createWorld(randomSeedValue = 1) {
     securityTerminals.forEach((term) => (term.hacked = false)); // Re-arm keypads
     laserTripwires.forEach((beam) => (beam.disabled = false)); // Re-arm lasers
 
+    particleEngineInstance.clear(); // Clear all particles
+    telemetryTrackerInstance.reset(); // Clear telemetry metrics
+
     facilityGuards.forEach((patrolGuard) => {
       patrolGuard.waypointIdx = 0; // Reset to primary patrol node
       patrolGuard.x = patrolGuard.waypoints[0].x; // Snap to node X
@@ -301,6 +318,14 @@ export function createWorld(randomSeedValue = 1) {
     let generatedEventsBitmask = EVENT_NONE; // Bitmask accumulating events
     worldSimulationState.timeElapsed += deltaSeconds; // Increment mission timer
 
+    // Advance particle effects physics
+    particleEngineInstance.update(deltaSeconds);
+
+    // Emit subtle ambient crystal shimmer near central vault diamond
+    if (!centralVault.unlocked && Math.random() < 0.3) {
+      particleEngineInstance.emitDiamondShimmer(centralVault.x, centralVault.y);
+    }
+
     // Calculate operative movement velocity based on sneak toggle
     let operativeTargetVelocity = PLAYER_CONFIG.walkSpeed; // Base walk speed
     if (inputControl.isSneaking) operativeTargetVelocity = PLAYER_CONFIG.sneakSpeed; // Sneak speed
@@ -311,6 +336,11 @@ export function createWorld(randomSeedValue = 1) {
     if (inputControl.dx !== 0 || inputControl.dy !== 0) {
       operativePlayer.angle = Math.atan2(inputControl.dy, inputControl.dx); // Update heading angle
       operativePlayer.speed = operativeTargetVelocity; // Update active speed
+      telemetryTrackerInstance.recordMovement(operativeTargetVelocity, deltaSeconds, inputControl.isSneaking); // Log telemetry
+
+      if (Math.random() < 0.25) {
+        particleEngineInstance.emitFootstepDustPuff(operativePlayer.x, operativePlayer.y, inputControl.isSneaking); // Dust
+      }
     } else {
       operativePlayer.speed = 0; // Zero speed when idle
     }
@@ -372,7 +402,7 @@ export function createWorld(randomSeedValue = 1) {
     worldSimulationState.detectedByLaser = false; // Reset laser alarm flag
     for (let laserIndex = 0; laserIndex < laserTripwires.length; laserIndex++) {
       const laserTripwire = laserTripwires[laserIndex]; // Active laser beam
-      if (laserTripwire.disabled) continue; // Skip hacked laser beams
+      if (laserTripwire.disabled) continue; // Skip bypassed laser tripwire
 
       laserTripwire.timer += deltaSeconds; // Advance cycle timer
       laserTripwire.active = Math.sin(laserTripwire.timer * 2) > -0.2; // Periodic blinking cycle
@@ -388,6 +418,7 @@ export function createWorld(randomSeedValue = 1) {
           worldSimulationState.detectedByLaser = true; // Laser beam interrupted
           worldSimulationState.alarm += ALARM_CONFIG.laserDetectionRate * deltaSeconds; // Rapid alarm surge
           generatedEventsBitmask |= EVENT_ALARM_SPIKE; // Dispatch alarm event
+          particleEngineInstance.emitLaserSparks(operativePlayer.x, operativePlayer.y, 4); // Laser contact sparks
         }
       }
     }
@@ -417,9 +448,12 @@ export function createWorld(randomSeedValue = 1) {
         }
       }
 
-      // Guard acoustic perception (hearing non-sneaking footsteps)
+      // Guard acoustic perception (hearing non-sneaking footsteps with wall damping)
       const currentFootstepNoiseRadius = operativePlayer.isSneaking ? PLAYER_CONFIG.sneakNoiseRadius : PLAYER_CONFIG.walkNoiseRadius; // Radius
-      if (operativePlayer.speed > 0 && guardToPlayerDistance < currentFootstepNoiseRadius && patrolGuard.state === STATE_PATROL) {
+      const wallDampingFactor = tacticsSpatialModel.getAcousticOcclusion(operativePlayer.x, operativePlayer.y, patrolGuard.x, patrolGuard.y);
+      const effectiveHearingDistance = currentFootstepNoiseRadius * wallDampingFactor;
+
+      if (operativePlayer.speed > 0 && guardToPlayerDistance < effectiveHearingDistance && patrolGuard.state === STATE_PATROL) {
         patrolGuard.state = STATE_SUSPICIOUS; // Switch to suspicious state
         patrolGuard.suspicion = Math.max(patrolGuard.suspicion, 60); // Elevate suspicion
         patrolGuard.investigateTarget = { x: operativePlayer.x, y: operativePlayer.y }; // Investigate noise origin
@@ -486,6 +520,7 @@ export function createWorld(randomSeedValue = 1) {
       worldSimulationState.alarm = Math.max(0, worldSimulationState.alarm - ALARM_CONFIG.decayRate * deltaSeconds); // Cooldown
     }
     worldSimulationState.alarm = Math.min(100, Math.max(0, worldSimulationState.alarm)); // Clamp alarm to 0-100
+    telemetryTrackerInstance.recordAlarm(worldSimulationState.alarm); // Log alarm sample
 
     // Interaction handling: hacking terminals & cracking the central vault safe
     operativePlayer.isHacking = false; // Reset interaction flag
@@ -497,6 +532,8 @@ export function createWorld(randomSeedValue = 1) {
           keyTerminal.hacked = true; // Mark terminal bypassed
           operativePlayer.isHacking = true; // Show hacking animation
           generatedEventsBitmask |= EVENT_HACK_TICK; // Dispatch tick sound
+          telemetryTrackerInstance.recordLaserBypass(); // Log bypassed laser
+          particleEngineInstance.emitTerminalHackGlints(keyTerminal.x, keyTerminal.y, 8); // Hack glints
           if (laserTripwires[keyTerminal.targetLaser - 1]) {
             laserTripwires[keyTerminal.targetLaser - 1].disabled = true; // Deactivate laser beam
           }
@@ -515,6 +552,7 @@ export function createWorld(randomSeedValue = 1) {
           operativePlayer.hasLoot = true; // Acquire target diamond
           worldSimulationState.score += centralVault.value; // Award $2,500,000 bounty
           generatedEventsBitmask |= EVENT_LOOT_GRABBED; // Dispatch victory loot event
+          particleEngineInstance.emitVaultBreachConfetti(centralVault.x, centralVault.y, 35); // Celebration burst
           worldSimulationState.statusText = 'HEIST OBJECTIVE ACQUIRED! ESCAPE TO THE VAN!'; // Announce escape
         }
       }

@@ -8,6 +8,7 @@ import {
   SCREEN_WIDTH, // Canvas width (1280px)
 } from './config.js';
 import { STATE_ALERT, STATE_PATROL, STATE_SUSPICIOUS } from './world.js'; // AI states
+import { formatBountyCurrency, formatMissionStopwatch } from './scoring.js'; // Scoring formatters
 
 export const SCREEN_TITLE = 0; // Mission briefing title screen
 export const SCREEN_PLAY = 1; // Active tactical infiltration view
@@ -439,7 +440,7 @@ export function createRenderer(targetCanvasElement) {
     renderingContext2d.font = 'bold 12px monospace'; // Loot stat typography
     renderingContext2d.fillStyle = '#fbbf24'; // Amber gold value tint
     renderingContext2d.textAlign = 'right'; // Right align
-    renderingContext2d.fillText(`LOOT VALUE: $${(currentSimulationState.vault.value).toLocaleString()}`, SCREEN_WIDTH - 40, 24); // Bounty value
+    renderingContext2d.fillText(`LOOT VALUE: ${formatBountyCurrency(currentSimulationState.vault.value)}`, SCREEN_WIDTH - 40, 24); // Bounty value
 
     renderingContext2d.font = '11px monospace'; // Loot status typography
     renderingContext2d.fillStyle = currentSimulationState.player.hasLoot ? '#4ade80' : '#cbd5e1'; // Green secured vs white locked
@@ -558,11 +559,11 @@ export function createRenderer(targetCanvasElement) {
 
     renderingContext2d.font = '22px monospace'; // Bounty score typography
     renderingContext2d.fillStyle = '#fbbf24'; // Amber gold bounty tint
-    renderingContext2d.fillText(`TOTAL BOUNTY EXTRACTED: $${extractedBountyScore.toLocaleString()}`, SCREEN_WIDTH / 2, 300); // Draw extracted score
+    renderingContext2d.fillText(`TOTAL BOUNTY EXTRACTED: ${formatBountyCurrency(extractedBountyScore)}`, SCREEN_WIDTH / 2, 300); // Draw extracted score
 
     renderingContext2d.font = '15px monospace'; // Debrief stats typography
     renderingContext2d.fillStyle = '#94a3b8'; // Slate stats tint
-    renderingContext2d.fillText(`Operation Elapsed Time: ${totalElapsedSeconds.toFixed(1)} seconds`, SCREEN_WIDTH / 2, 340); // Draw elapsed time
+    renderingContext2d.fillText(`Operation Elapsed Time: ${formatMissionStopwatch(totalElapsedSeconds)}`, SCREEN_WIDTH / 2, 340); // Draw elapsed time
     renderingContext2d.fillText('Stealth Rating: S-TIER (Zero Alarms Escaped)', SCREEN_WIDTH / 2, 370); // Draw stealth rating
 
     renderingContext2d.font = 'bold 16px monospace'; // Replay prompt typography
@@ -581,6 +582,12 @@ export function createRenderer(targetCanvasElement) {
     renderSurveillanceCameras(activeWorldSimulationState.cameras, elapsedSimulationTime); // Render CCTV cameras
     renderPatrolGuards(activeWorldSimulationState.guards, elapsedSimulationTime); // Render guards
     renderOperativePlayer(activeWorldSimulationState.player, elapsedSimulationTime); // Render operative avatar
+
+    // Render active visual particle effects
+    if (activeWorldSimulationState.particles) {
+      activeWorldSimulationState.particles.draw(renderingContext2d); // Draw living particles
+    }
+
     renderTacticalHeistHUD(activeWorldSimulationState); // Render top HUD & alarm meter
 
     if (activeScreenMode === SCREEN_TITLE) {
